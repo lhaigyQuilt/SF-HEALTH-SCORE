@@ -41,6 +41,11 @@ export default function FieldDrawer({ field, onClose }) {
           {f.classification}
         </div>
         <div style={{ fontSize: 13, color: 'var(--text)', marginTop: 10 }}>{f.action}</div>
+        {f.manualOverride && (
+          <div className="cell-muted" style={{ marginTop: 4 }}>
+            Manual override in the source workbook: {f.manualOverride}
+          </div>
+        )}
 
         <div className="drawer-section-title">Identity</div>
         <div className="drawer-grid">

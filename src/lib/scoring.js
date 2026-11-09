@@ -92,8 +92,12 @@ function healthScore(scores, sm) {
   return round1((numerator / denominator) * 100);
 }
 
-function band(f, score, sm, opts) {
-  if (opts.hasManagedPackageBand && f.origin === 'Managed Package') return 'Managed Package';
+// Same as the workbook Band formula (AQ), except that Standard and Managed Package fields always
+// get their own band: neither can be deleted, so a Healthy-to-Retire rating doesn't apply to them.
+// Their Health Score still shows, for reference only.
+function band(f, score, sm) {
+  if (f.origin === 'Managed Package') return 'Managed Package';
+  if (f.origin === 'Standard') return 'Standard Field';
   if (hasAge(f) && f.age < sm.graceDays) return 'Too New - Provisional';
   if (num(f.eligibleSinceCreation) < sm.minEligible) return 'Insufficient Data';
   if (score >= sm.bandHealthy) return 'Healthy';
@@ -156,7 +160,7 @@ function effectiveAge(f, sm) {
 // Scores one field record against a scoring model config, returning the original
 // raw fields plus every computed column (component scores, health score, band,
 // classification, action, effective age).
-export function scoreField(f, sm, opts = { hasManagedPackageBand: true }) {
+export function scoreField(f, sm) {
   const population = populationScore(f, sm);
   const recency = recencyScore(f, sm);
   const trend = trendScore(f, sm);
@@ -174,15 +178,15 @@ export function scoreField(f, sm, opts = { hasManagedPackageBand: true }) {
     integrationScore: integration,
     docScore: doc,
     healthScore: score,
-    band: band(f, score, sm, opts),
+    band: band(f, score, sm),
     classification,
     action: action(f, classification, sm),
     effectiveAge: effectiveAge(f, sm),
   };
 }
 
-export function scoreFields(fields, sm, opts) {
-  return fields.map(f => scoreField(f, sm, opts));
+export function scoreFields(fields, sm) {
+  return fields.map(f => scoreField(f, sm));
 }
 
 export { RETIRE_SET, VERIFY_SET, num };

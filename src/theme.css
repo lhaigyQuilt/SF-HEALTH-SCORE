@@ -111,6 +111,24 @@ a {
   gap: 3px;
 }
 
+.sidebar-switch-label {
+  text-transform: uppercase;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--sidebar-link-muted);
+  font-weight: 600;
+  padding: 0 2px 5px;
+}
+
+.sidebar-org-switch--wrap {
+  flex-wrap: wrap;
+}
+
+.sidebar-org-switch--wrap .sidebar-org-btn {
+  flex: 1 1 30%;
+  padding: 6px 4px;
+}
+
 .sidebar-org-btn {
   flex: 1;
   border: none;

@@ -78,8 +78,8 @@ export function OrgProvider({ children }) {
 
   const scored = useMemo(() => {
     if (!base) return [];
-    return scoreFields(base.fields, base.scoringModel, { hasManagedPackageBand: object.hasManagedPackageBand });
-  }, [base, object.hasManagedPackageBand]);
+    return scoreFields(base.fields, base.scoringModel);
+  }, [base]);
 
   const setOrg = useCallback(next => setOrgState(next), []);
   const setObjectKey = useCallback(next => setObjectKeyState(next), []);

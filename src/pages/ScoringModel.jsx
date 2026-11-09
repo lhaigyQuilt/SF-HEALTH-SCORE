@@ -43,7 +43,7 @@ export default function ScoringModelPage() {
             />
             <ValueRow
               label="Weight: Recency"
-              desc="Whether the field is still being populated on new opportunities. n/a for formula fields."
+              desc={`Whether the field is still being populated on new ${object.label} records. n/a for formula fields.`}
               value={sm.weightRecency}
             />
             <ValueRow
@@ -125,6 +125,23 @@ export default function ScoringModelPage() {
             <ValueRow label="Review" desc="Investigate: consolidate, fix adoption, or plan removal." value={sm.bandReview} />
             <ValueRow label="Likely Debt" desc="Strong removal candidate pending dependency check." value={sm.bandLikelyDebt} />
             <ValueRow label="Retire" desc="Below Likely Debt: no measurable value." value={sm.bandRetire} />
+          </tbody>
+        </table>
+      </SectionCard>
+
+      <SectionCard title="Bands set by field origin">
+        <table className="sm-table">
+          <tbody>
+            <ValueRow
+              label="Standard Field"
+              desc="Every standard Salesforce field. It cannot be deleted, so it gets no Healthy-to-Retire rating; its Health Score still shows, for reference only."
+              value="—"
+            />
+            <ValueRow
+              label="Managed Package"
+              desc="Every field that belongs to an installed package. It cannot be deleted either, so it is banded the same way and kept off Retire Candidates."
+              value="—"
+            />
           </tbody>
         </table>
       </SectionCard>
