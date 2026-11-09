@@ -16,17 +16,17 @@ function NavItem({ to, label, count }) {
 }
 
 export default function Sidebar() {
-  const { org, setOrg, scored, base } = useOrg();
+  const { org, setOrg, objectKey, setObjectKey, object, objects, scored, base } = useOrg();
 
   const counts = useMemo(() => {
     if (!scored.length) return {};
     return {
       fieldHealth: scored.length,
-      additionalNotes: retireCandidates(scored).length,
+      additionalNotes: base?.additionalNotes?.rows?.length ?? 0,
       retire: retireCandidates(scored).length,
       verify: verifyFormulaUsage(scored).length,
       dq: dataQualityFlags(scored).length,
-      na: base?.notAssessable?.length ?? 0,
+      na: base?.notAssessable?.rows?.length ?? 0,
     };
   }, [scored, base]);
 
@@ -37,6 +37,16 @@ export default function Sidebar() {
         <div className="sidebar-brand-text">
           <span className="sidebar-brand-name">Quilt Software</span>
           <span className="sidebar-brand-sub">Sales Ops</span>
+        </div>
+      </div>
+
+      <div className="sidebar-org">
+        <div className="sidebar-org-switch">
+          {objects.map(o => (
+            <button key={o.key} className={`sidebar-org-btn${objectKey === o.key ? ' active' : ''}`} onClick={() => setObjectKey(o.key)}>
+              {o.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -55,7 +65,7 @@ export default function Sidebar() {
         <NavItem to="/" label="Read Me" />
         <NavItem to="/scoring-model" label="Scoring Model" />
 
-        <div className="sidebar-section-label">Opportunity fields</div>
+        <div className="sidebar-section-label">{object.label} fields</div>
         <NavItem to="/field-health" label="Field Health" count={counts.fieldHealth} />
         <NavItem to="/additional-notes" label="Additional Notes" count={counts.additionalNotes} />
         <NavItem to="/retire-candidates" label="Retire Candidates" count={counts.retire} />

@@ -92,8 +92,8 @@ function healthScore(scores, sm) {
   return round1((numerator / denominator) * 100);
 }
 
-function band(f, score, sm) {
-  if (f.origin === 'Managed Package') return 'Managed Package';
+function band(f, score, sm, opts) {
+  if (opts.hasManagedPackageBand && f.origin === 'Managed Package') return 'Managed Package';
   if (hasAge(f) && f.age < sm.graceDays) return 'Too New - Provisional';
   if (num(f.eligibleSinceCreation) < sm.minEligible) return 'Insufficient Data';
   if (score >= sm.bandHealthy) return 'Healthy';
@@ -156,7 +156,7 @@ function effectiveAge(f, sm) {
 // Scores one field record against a scoring model config, returning the original
 // raw fields plus every computed column (component scores, health score, band,
 // classification, action, effective age).
-export function scoreField(f, sm) {
+export function scoreField(f, sm, opts = { hasManagedPackageBand: true }) {
   const population = populationScore(f, sm);
   const recency = recencyScore(f, sm);
   const trend = trendScore(f, sm);
@@ -174,15 +174,15 @@ export function scoreField(f, sm) {
     integrationScore: integration,
     docScore: doc,
     healthScore: score,
-    band: band(f, score, sm),
+    band: band(f, score, sm, opts),
     classification,
     action: action(f, classification, sm),
     effectiveAge: effectiveAge(f, sm),
   };
 }
 
-export function scoreFields(fields, sm) {
-  return fields.map(f => scoreField(f, sm));
+export function scoreFields(fields, sm, opts) {
+  return fields.map(f => scoreField(f, sm, opts));
 }
 
 export { RETIRE_SET, VERIFY_SET, num };

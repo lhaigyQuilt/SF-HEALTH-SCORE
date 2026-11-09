@@ -1,7 +1,7 @@
 const cache = {};
 
-export async function loadOrgData(org) {
-  const key = org.toLowerCase();
+export async function loadDataset(objectKey, org) {
+  const key = `${objectKey}/${org.toLowerCase()}`;
   if (cache[key]) return cache[key];
   const res = await fetch(`/data/${key}.json`);
   if (!res.ok) throw new Error(`Failed to load ${key}.json`);

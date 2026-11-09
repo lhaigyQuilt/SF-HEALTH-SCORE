@@ -1,11 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { loadOrgData } from '../lib/loadOrg';
+import { loadDataset } from '../lib/loadOrg';
 import { scoreFields } from '../lib/scoring';
+import { OBJECTS, OBJECT_BY_KEY } from '../lib/objects';
 
 const OrgContext = createContext(null);
 
 const ORG_STORAGE_KEY = 'ofh:org';
-const NOTES_KEY = org => `ofh:${org}:notes`;
+const OBJECT_STORAGE_KEY = 'ofh:object';
+const NOTES_KEY = (objectKey, org) => `ofh:${objectKey}:${org}:notes`;
 
 function readLocal(key, fallback) {
   try {
@@ -26,22 +28,29 @@ function writeLocal(key, value) {
 
 export function OrgProvider({ children }) {
   const [org, setOrgState] = useState(() => readLocal(ORG_STORAGE_KEY, 'SBU'));
-  const [base, setBase] = useState(null); // { scoringModel, fields, notAssessable, readMe } from file, as shipped
+  const [objectKey, setObjectKeyState] = useState(() => readLocal(OBJECT_STORAGE_KEY, OBJECTS[0].key));
+  const [base, setBase] = useState(null); // { scoringModel, fields, additionalNotes, notAssessable, readMe } from file, as shipped
   const [savedNotes, setSavedNotes] = useState({});
   const [notes, setNotes] = useState({});
   const [loading, setLoading] = useState(true);
+
+  const object = OBJECT_BY_KEY[objectKey] ?? OBJECTS[0];
 
   useEffect(() => {
     writeLocal(ORG_STORAGE_KEY, org);
   }, [org]);
 
   useEffect(() => {
+    writeLocal(OBJECT_STORAGE_KEY, objectKey);
+  }, [objectKey]);
+
+  useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    loadOrgData(org).then(data => {
+    loadDataset(objectKey, org).then(data => {
       if (cancelled) return;
       setBase(data);
-      const n = readLocal(NOTES_KEY(org), {});
+      const n = readLocal(NOTES_KEY(objectKey, org), {});
       setSavedNotes(n);
       setNotes(n);
       setLoading(false);
@@ -49,14 +58,14 @@ export function OrgProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [org]);
+  }, [objectKey, org]);
 
   const notesDirty = useMemo(() => JSON.stringify(savedNotes) !== JSON.stringify(notes), [savedNotes, notes]);
 
   const saveNotes = useCallback(() => {
-    writeLocal(NOTES_KEY(org), notes);
+    writeLocal(NOTES_KEY(objectKey, org), notes);
     setSavedNotes(notes);
-  }, [org, notes]);
+  }, [objectKey, org, notes]);
 
   const discardNotes = useCallback(() => {
     setNotes(savedNotes);
@@ -68,14 +77,19 @@ export function OrgProvider({ children }) {
 
   const scored = useMemo(() => {
     if (!base) return [];
-    return scoreFields(base.fields, base.scoringModel);
-  }, [base]);
+    return scoreFields(base.fields, base.scoringModel, { hasManagedPackageBand: object.hasManagedPackageBand });
+  }, [base, object.hasManagedPackageBand]);
 
   const setOrg = useCallback(next => setOrgState(next), []);
+  const setObjectKey = useCallback(next => setObjectKeyState(next), []);
 
   const value = {
     org,
     setOrg,
+    objectKey,
+    setObjectKey,
+    object,
+    objects: OBJECTS,
     loading,
     base,
     scoringModel: base?.scoringModel ?? null,

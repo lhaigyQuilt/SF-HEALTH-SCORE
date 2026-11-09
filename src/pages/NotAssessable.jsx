@@ -1,46 +1,33 @@
 import { useOrg } from '../state/OrgContext';
-import { PageHeader, EmptyState, Tag } from '../components/ui';
+import { PageHeader, EmptyState } from '../components/ui';
 import { dash } from '../lib/format';
 
 export default function NotAssessable() {
-  const { org, base } = useOrg();
-  const rows = base?.notAssessable ?? [];
+  const { org, object, base } = useOrg();
+  const notAssessable = base?.notAssessable ?? { columns: [], rows: [] };
 
   return (
     <div>
-      <PageHeader title="Not Assessable" subtitle={`${org} — fields excluded from measurement.`} />
-      {rows.length === 0 ? (
-        <EmptyState>Nothing excluded for this org.</EmptyState>
+      <PageHeader title="Not Assessable" subtitle={`${object.label} — ${org}. Fields excluded from measurement.`} />
+      {notAssessable.rows.length === 0 ? (
+        <EmptyState>Nothing excluded for this object/org.</EmptyState>
       ) : (
         <table className="data-table">
           <thead>
             <tr>
-              <th>Field</th>
-              <th>Data type</th>
-              <th>Why not assessable</th>
-              <th>Help text?</th>
-              <th>Description?</th>
-              <th>Required?</th>
+              {notAssessable.columns.map(c => (
+                <th key={c}>{c}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map(f => (
-              <tr key={f.apiName} style={{ cursor: 'default' }}>
-                <td>
-                  <div>{f.label}</div>
-                  <div className="cell-mono">{f.apiName}</div>
-                </td>
-                <td className="cell-muted">{dash(f.dataType)}</td>
-                <td className="cell-muted">{dash(f.why)}</td>
-                <td>
-                  <Tag>{dash(f.helpText)}</Tag>
-                </td>
-                <td>
-                  <Tag>{dash(f.description)}</Tag>
-                </td>
-                <td>
-                  <Tag>{dash(f.required)}</Tag>
-                </td>
+            {notAssessable.rows.map((row, i) => (
+              <tr key={row[notAssessable.columns[0]] ?? i} style={{ cursor: 'default' }}>
+                {notAssessable.columns.map(c => (
+                  <td key={c} className={c === notAssessable.columns[0] ? 'cell-mono' : 'cell-muted'}>
+                    {dash(row[c])}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>

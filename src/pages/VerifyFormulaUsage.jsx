@@ -6,7 +6,7 @@ import { verifyFormulaUsage } from '../lib/derive';
 import { pct, num0, dash, dateShort } from '../lib/format';
 
 export default function VerifyFormulaUsage() {
-  const { org, scored } = useOrg();
+  const { org, object, scored } = useOrg();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(null);
 
@@ -23,7 +23,7 @@ export default function VerifyFormulaUsage() {
     <div>
       <PageHeader
         title="Verify Formula Usage"
-        subtitle={`${org} — formulas with no measurable usage signal: no metadata references, or a single constant value. Dependency data can't see reports, dashboards or external integrations — check those before deleting anything here.`}
+        subtitle={`${object.label} — ${org} — formulas with no measurable usage signal: no metadata references, or a single constant value. Dependency data can't see reports, dashboards or external integrations — check those before deleting anything here.`}
       />
 
       <div className="toolbar">

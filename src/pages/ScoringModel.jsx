@@ -14,7 +14,7 @@ function ValueRow({ label, desc, value }) {
 }
 
 export default function ScoringModelPage() {
-  const { org, scoringModel } = useOrg();
+  const { org, object, scoringModel } = useOrg();
   if (!scoringModel) return null;
   const sm = scoringModel;
 
@@ -30,7 +30,7 @@ export default function ScoringModelPage() {
     <div>
       <PageHeader
         title="Scoring Model"
-        subtitle={`Reference inputs — ${org}. These weights and thresholds drive every score on Field Health and are fixed for this analysis.`}
+        subtitle={`Reference inputs — ${object.label} — ${org}. These weights and thresholds drive every score on Field Health and are fixed for this analysis.`}
       />
 
       <SectionCard title="Component weights" count={`total ${weightTotal}`}>

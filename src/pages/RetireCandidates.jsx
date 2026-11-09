@@ -6,7 +6,7 @@ import { retireCandidates } from '../lib/derive';
 import { pct, num0, dash, dateShort } from '../lib/format';
 
 export default function RetireCandidates() {
-  const { org, scored } = useOrg();
+  const { org, object, scored } = useOrg();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(null);
 
@@ -23,7 +23,7 @@ export default function RetireCandidates() {
     <div>
       <PageHeader
         title="Retire Candidates"
-        subtitle={`${org} — custom, non-required fields past the grace period with no measurable current value. Verify against reports, dashboards and integrations before deleting anything.`}
+        subtitle={`${object.label} — ${org} — custom, non-required fields past the grace period with no measurable current value. Verify against reports, dashboards and integrations before deleting anything.`}
       />
 
       <div className="toolbar">

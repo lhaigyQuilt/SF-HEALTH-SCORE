@@ -10,7 +10,7 @@ import { matchesFilters } from '../lib/columns';
 const ORIGINS = ['Custom', 'Standard', 'Managed Package'];
 
 export default function FieldHealth() {
-  const { org, scored } = useOrg();
+  const { org, object, scored } = useOrg();
   const [search, setSearch] = useState('');
   const [filtersByKey, setFiltersByKey] = useState({});
   const [sortKey, setSortKey] = useState('healthScore');
@@ -74,7 +74,7 @@ export default function FieldHealth() {
 
   return (
     <div>
-      <PageHeader title="Field Health" subtitle={`One row per assessed Opportunity field — ${org}. ${scored.length} fields.`} />
+      <PageHeader title="Field Health" subtitle={`One row per assessed ${object.label} field — ${org}. ${scored.length} fields.`} />
 
       <div className="stat-row">
         <StatTile number={scored.length} label="Fields assessed" />

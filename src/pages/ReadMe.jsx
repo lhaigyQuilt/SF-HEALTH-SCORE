@@ -2,13 +2,13 @@ import { useOrg } from '../state/OrgContext';
 import { PageHeader } from '../components/ui';
 
 export default function ReadMe() {
-  const { base, org } = useOrg();
+  const { base } = useOrg();
   const rows = base?.readMe ?? [];
   const [title, ...rest] = rows;
 
   return (
     <div>
-      <PageHeader title={title?.a ?? 'Read Me'} subtitle={`Opportunity Field Health & Tech Debt Analysis — ${org}`} />
+      <PageHeader title="Read Me" subtitle={title?.a} />
       <div>
         {rest.map((r, i) =>
           r.b ? (

@@ -8,7 +8,7 @@ import { pct, num0, dash, dateShort } from '../lib/format';
 const FLAG_FILTERS = ['Required but not populated', 'Adopted', 'Undocumented'];
 
 export default function DataQualityFlags() {
-  const { org, scored } = useOrg();
+  const { org, object, scored } = useOrg();
   const [search, setSearch] = useState('');
   const [flagFilter, setFlagFilter] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -39,7 +39,7 @@ export default function DataQualityFlags() {
     <div>
       <PageHeader
         title="Data Quality Flags"
-        subtitle={`${org} — required fields not actually populated, fields adopted more than a year after creation, and fields with no help text or description.`}
+        subtitle={`${object.label} — ${org} — required fields not actually populated, fields adopted more than a year after creation, and fields with no help text or description.`}
       />
 
       <div className="chip-row">
