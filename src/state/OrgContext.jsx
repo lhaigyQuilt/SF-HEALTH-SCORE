@@ -35,6 +35,7 @@ export function OrgProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const object = OBJECT_BY_KEY[objectKey] ?? OBJECTS[0];
+  const effectiveOrg = object.orgs.includes(org) ? org : object.orgs[0];
 
   useEffect(() => {
     writeLocal(ORG_STORAGE_KEY, org);
@@ -47,10 +48,10 @@ export function OrgProvider({ children }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    loadDataset(objectKey, org).then(data => {
+    loadDataset(objectKey, effectiveOrg).then(data => {
       if (cancelled) return;
       setBase(data);
-      const n = readLocal(NOTES_KEY(objectKey, org), {});
+      const n = readLocal(NOTES_KEY(objectKey, effectiveOrg), {});
       setSavedNotes(n);
       setNotes(n);
       setLoading(false);
@@ -58,14 +59,14 @@ export function OrgProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [objectKey, org]);
+  }, [objectKey, effectiveOrg]);
 
   const notesDirty = useMemo(() => JSON.stringify(savedNotes) !== JSON.stringify(notes), [savedNotes, notes]);
 
   const saveNotes = useCallback(() => {
-    writeLocal(NOTES_KEY(objectKey, org), notes);
+    writeLocal(NOTES_KEY(objectKey, effectiveOrg), notes);
     setSavedNotes(notes);
-  }, [objectKey, org, notes]);
+  }, [objectKey, effectiveOrg, notes]);
 
   const discardNotes = useCallback(() => {
     setNotes(savedNotes);
@@ -84,7 +85,7 @@ export function OrgProvider({ children }) {
   const setObjectKey = useCallback(next => setObjectKeyState(next), []);
 
   const value = {
-    org,
+    org: effectiveOrg,
     setOrg,
     objectKey,
     setObjectKey,

@@ -52,7 +52,7 @@ export default function Sidebar() {
 
       <div className="sidebar-org">
         <div className="sidebar-org-switch">
-          {['SBU', 'XBU'].map(o => (
+          {object.orgs.map(o => (
             <button key={o} className={`sidebar-org-btn${org === o ? ' active' : ''}`} onClick={() => setOrg(o)}>
               {o}
             </button>
