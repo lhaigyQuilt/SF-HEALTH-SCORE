@@ -652,6 +652,15 @@ table.data-table tbody tr:hover {
   outline: none;
 }
 
+.sm-value {
+  font-weight: 600;
+  color: var(--navy);
+  background: var(--line);
+  border-radius: 6px;
+  padding: 5px 10px;
+  display: inline-block;
+}
+
 /* ---------- Read Me ---------- */
 
 .readme-row {
