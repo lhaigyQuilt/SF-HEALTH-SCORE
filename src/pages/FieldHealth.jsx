@@ -2,16 +2,17 @@ import { useMemo, useState } from 'react';
 import { useOrg } from '../state/OrgContext';
 import { PageHeader, StatTile, FilterChip, Pill, ProgressBar, EmptyState } from '../components/ui';
 import FieldDrawer from '../components/FieldDrawer';
+import FilterBuilder from '../components/FilterBuilder';
 import { pct, num0, dash } from '../lib/format';
 import { BAND_ORDER, bandCounts } from '../lib/derive';
+import { matchesFilters } from '../lib/columns';
 
 const ORIGINS = ['Custom', 'Standard', 'Managed Package'];
 
 export default function FieldHealth() {
   const { org, scored } = useOrg();
   const [search, setSearch] = useState('');
-  const [band, setBand] = useState(null);
-  const [origin, setOrigin] = useState(null);
+  const [filtersByKey, setFiltersByKey] = useState({});
   const [sortKey, setSortKey] = useState('healthScore');
   const [sortDir, setSortDir] = useState('asc');
   const [selected, setSelected] = useState(null);
@@ -22,10 +23,31 @@ export default function FieldHealth() {
     return Math.round((scored.reduce((s, f) => s + f.healthScore, 0) / scored.length) * 10) / 10;
   }, [scored]);
 
+  function toggleQuickFilter(key, value) {
+    setFiltersByKey(prev => {
+      if (prev[key]?.value === value) {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      }
+      return { ...prev, [key]: { op: 'is', value } };
+    });
+  }
+
+  function addFilter(key, op, value) {
+    setFiltersByKey(prev => ({ ...prev, [key]: { op, value } }));
+  }
+
+  function removeFilter(key) {
+    setFiltersByKey(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }
+
   const filtered = useMemo(() => {
-    let rows = scored;
-    if (band) rows = rows.filter(f => f.band === band);
-    if (origin) rows = rows.filter(f => f.origin === origin);
+    let rows = scored.filter(f => matchesFilters(f, filtersByKey));
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       rows = rows.filter(f => f.apiName.toLowerCase().includes(q) || (f.label || '').toLowerCase().includes(q));
@@ -39,7 +61,7 @@ export default function FieldHealth() {
       if (bv === '' || bv === null || bv === undefined) return -1;
       return av > bv ? dir : -dir;
     });
-  }, [scored, band, origin, search, sortKey, sortDir]);
+  }, [scored, filtersByKey, search, sortKey, sortDir]);
 
   function toggleSort(key) {
     if (sortKey === key) {
@@ -64,18 +86,26 @@ export default function FieldHealth() {
 
       <div className="chip-row">
         {BAND_ORDER.filter(b => counts[b]).map(b => (
-          <FilterChip key={b} active={band === b} onClick={() => setBand(band === b ? null : b)}>
+          <FilterChip key={b} active={filtersByKey.band?.value === b} onClick={() => toggleQuickFilter('band', b)}>
             {b} ({counts[b]})
           </FilterChip>
         ))}
       </div>
       <div className="chip-row">
         {ORIGINS.map(o => (
-          <FilterChip key={o} active={origin === o} onClick={() => setOrigin(origin === o ? null : o)} plum>
+          <FilterChip key={o} active={filtersByKey.origin?.value === o} onClick={() => toggleQuickFilter('origin', o)} plum>
             {o}
           </FilterChip>
         ))}
       </div>
+
+      <FilterBuilder
+        rows={scored}
+        filtersByKey={filtersByKey}
+        onAdd={addFilter}
+        onRemove={removeFilter}
+        onClearAll={() => setFiltersByKey({})}
+      />
 
       <div className="toolbar">
         <input className="search-input" placeholder="Search by API name or label…" value={search} onChange={e => setSearch(e.target.value)} />

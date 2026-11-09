@@ -450,6 +450,19 @@ table.data-table tbody tr:hover {
   background: var(--soft-plum);
 }
 
+.field-select {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.field-select:focus {
+  outline: none;
+  border-color: var(--plum);
+}
+
 .search-input {
   border: 1px solid var(--border);
   border-radius: 7px;
