@@ -5,6 +5,8 @@ export const OBJECTS = [
   { key: 'opportunity', label: 'Opportunity', hasManagedPackageBand: true, orgs: ['SBU', 'XBU'] },
   { key: 'case', label: 'Case', hasManagedPackageBand: false, orgs: ['SBU', 'XBU'] },
   { key: 'account', label: 'Account', hasManagedPackageBand: false, orgs: ['SBU', 'XBU'] },
+  { key: 'lead', label: 'Lead', hasManagedPackageBand: false, orgs: ['SBU', 'XBU'] },
+  { key: 'contact', label: 'Contact', hasManagedPackageBand: false, orgs: ['SBU', 'XBU'] },
 ];
 
 export const OBJECT_BY_KEY = Object.fromEntries(OBJECTS.map(o => [o.key, o]));
