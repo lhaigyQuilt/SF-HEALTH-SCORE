@@ -41,6 +41,7 @@ export const BAND_ORDER = [
   'Retire',
   'Too New - Provisional',
   'Insufficient Data',
+  'Standard Field',
   'Managed Package',
 ];
 
@@ -52,6 +53,7 @@ export const BAND_STATUS = {
   Retire: 'red',
   'Too New - Provisional': 'teal',
   'Insufficient Data': 'gray',
+  'Standard Field': 'gray',
   'Managed Package': 'gray',
 };
 

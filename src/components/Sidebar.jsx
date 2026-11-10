@@ -41,20 +41,22 @@ export default function Sidebar() {
       </div>
 
       <div className="sidebar-org">
+        <div className="sidebar-switch-label">Org</div>
         <div className="sidebar-org-switch">
-          {objects.map(o => (
-            <button key={o.key} className={`sidebar-org-btn${objectKey === o.key ? ' active' : ''}`} onClick={() => setObjectKey(o.key)}>
-              {o.label}
+          {object.orgs.map(o => (
+            <button key={o} className={`sidebar-org-btn${org === o ? ' active' : ''}`} onClick={() => setOrg(o)}>
+              {o}
             </button>
           ))}
         </div>
       </div>
 
       <div className="sidebar-org">
-        <div className="sidebar-org-switch">
-          {object.orgs.map(o => (
-            <button key={o} className={`sidebar-org-btn${org === o ? ' active' : ''}`} onClick={() => setOrg(o)}>
-              {o}
+        <div className="sidebar-switch-label">Object</div>
+        <div className="sidebar-org-switch sidebar-org-switch--wrap">
+          {objects.map(o => (
+            <button key={o.key} className={`sidebar-org-btn${objectKey === o.key ? ' active' : ''}`} onClick={() => setObjectKey(o.key)}>
+              {o.label}
             </button>
           ))}
         </div>

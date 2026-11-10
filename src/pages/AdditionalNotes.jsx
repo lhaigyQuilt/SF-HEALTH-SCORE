@@ -5,20 +5,31 @@ import SaveBar from '../components/SaveBar';
 import { dash } from '../lib/format';
 
 export default function AdditionalNotes() {
-  const { org, object, base, notes, setNote, notesDirty, saveNotes, resetNotes } = useOrg();
+  const { org, object, base, scored, notes, setNote, notesDirty, saveNotes, resetNotes } = useOrg();
   const [search, setSearch] = useState('');
 
   const additionalNotes = base?.additionalNotes ?? { columns: [], rows: [] };
-  const apiCol = additionalNotes.columns[0];
+  const apiCol = additionalNotes.columns.includes('API Name') ? 'API Name' : additionalNotes.columns[0];
 
+  // Band / Classification / Action come from the live scoring, so they always agree with Field
+  // Health. Rows for fields no longer assessed (e.g. deleted from the org) keep their saved text.
   const rows = useMemo(() => {
-    let r = additionalNotes.rows;
+    const byApi = Object.fromEntries(scored.map(f => [f.apiName, f]));
+    let r = additionalNotes.rows.map(row => {
+      const f = byApi[row[apiCol]];
+      if (!f) return row;
+      const live = { ...row };
+      if ('Band' in row) live.Band = f.band;
+      if ('Classification' in row) live.Classification = f.classification;
+      if ('Action' in row) live.Action = f.action;
+      return live;
+    });
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       r = r.filter(row => Object.values(row).some(v => (v ?? '').toString().toLowerCase().includes(q)));
     }
     return r;
-  }, [additionalNotes.rows, search]);
+  }, [additionalNotes.rows, apiCol, scored, search]);
 
   return (
     <div>
