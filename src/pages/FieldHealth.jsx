@@ -3,7 +3,7 @@ import { useOrg } from '../state/OrgContext';
 import { PageHeader, StatTile, FilterChip, Pill, ProgressBar, EmptyState } from '../components/ui';
 import FieldDrawer from '../components/FieldDrawer';
 import FilterBuilder from '../components/FilterBuilder';
-import { pct, num0, dash } from '../lib/format';
+import { pct, num0, dash, dateShort } from '../lib/format';
 import { BAND_ORDER, bandCounts } from '../lib/derive';
 import { matchesFilters } from '../lib/columns';
 
@@ -120,8 +120,11 @@ export default function FieldHealth() {
             <tr>
               <th>Field</th>
               <th>Origin</th>
+              <th onClick={() => toggleSort('createdDate')}>Created</th>
+              <th onClick={() => toggleSort('lastModified')}>Last Modified</th>
               <th onClick={() => toggleSort('pctSinceCreation')}>% Pop (since creation)</th>
               <th onClick={() => toggleSort('age')}>Age (d)</th>
+              <th onClick={() => toggleSort('lastPopulated')}>Last Populated</th>
               <th onClick={() => toggleSort('totalRefs')}>Refs</th>
               <th onClick={() => toggleSort('healthScore')}>Health</th>
               <th>Band</th>
@@ -136,8 +139,11 @@ export default function FieldHealth() {
                   <div className="cell-mono">{f.apiName}</div>
                 </td>
                 <td className="cell-muted">{f.origin}</td>
+                <td className="cell-muted">{dateShort(f.createdDate)}</td>
+                <td className="cell-muted">{dateShort(f.lastModified)}</td>
                 <td>{f.formula === 'Yes' ? <span className="cell-muted">n/a</span> : pct(f.pctSinceCreation)}</td>
                 <td className="cell-muted">{dash(f.age)}</td>
+                <td className="cell-muted">{dash(f.lastPopulated)}</td>
                 <td className="cell-muted">{num0(f.totalRefs)}</td>
                 <td style={{ minWidth: 92 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
