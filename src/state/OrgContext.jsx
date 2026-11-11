@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { loadDataset } from '../lib/loadOrg';
+import { fetchSharedNotes, saveSharedNotes, checkAdminEmail } from '../lib/notesApi';
 import { scoreFields } from '../lib/scoring';
 import { OBJECTS, OBJECT_BY_KEY } from '../lib/objects';
 
@@ -7,7 +8,8 @@ const OrgContext = createContext(null);
 
 const ORG_STORAGE_KEY = 'ofh:org';
 const OBJECT_STORAGE_KEY = 'ofh:object';
-const NOTES_KEY = (objectKey, org) => `ofh:${objectKey}:${org}:notes`;
+const FIELD_HEALTH_FILTERS_KEY = 'ofh:fieldHealthFilters';
+const ADMIN_EMAIL_KEY = 'ofh:adminEmail';
 
 function readLocal(key, fallback) {
   try {
@@ -30,9 +32,13 @@ export function OrgProvider({ children }) {
   const [org, setOrgState] = useState(() => readLocal(ORG_STORAGE_KEY, 'SBU'));
   const [objectKey, setObjectKeyState] = useState(() => readLocal(OBJECT_STORAGE_KEY, OBJECTS[0].key));
   const [base, setBase] = useState(null); // { scoringModel, fields, additionalNotes, notAssessable, readMe } from file, as shipped
+  const [notes, setNotes] = useState({}); // shared per-field notes, loaded from /api/notes
   const [savedNotes, setSavedNotes] = useState({});
-  const [notes, setNotes] = useState({});
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesError, setNotesError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [fieldHealthFilters, setFieldHealthFiltersState] = useState(() => readLocal(FIELD_HEALTH_FILTERS_KEY, {}));
+  const [adminEmail, setAdminEmail] = useState(() => readLocal(ADMIN_EMAIL_KEY, null));
 
   const object = OBJECT_BY_KEY[objectKey] ?? OBJECTS[0];
   const effectiveOrg = object.orgs.includes(org) ? org : object.orgs[0];
@@ -48,33 +54,18 @@ export function OrgProvider({ children }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    loadDataset(objectKey, effectiveOrg).then(data => {
+    setNotesError('');
+    Promise.all([loadDataset(objectKey, effectiveOrg), fetchSharedNotes(objectKey, effectiveOrg)]).then(([data, sharedNotes]) => {
       if (cancelled) return;
       setBase(data);
-      const n = readLocal(NOTES_KEY(objectKey, effectiveOrg), {});
-      setSavedNotes(n);
-      setNotes(n);
+      setNotes(sharedNotes);
+      setSavedNotes(sharedNotes);
       setLoading(false);
     });
     return () => {
       cancelled = true;
     };
   }, [objectKey, effectiveOrg]);
-
-  const notesDirty = useMemo(() => JSON.stringify(savedNotes) !== JSON.stringify(notes), [savedNotes, notes]);
-
-  const saveNotes = useCallback(() => {
-    writeLocal(NOTES_KEY(objectKey, effectiveOrg), notes);
-    setSavedNotes(notes);
-  }, [objectKey, effectiveOrg, notes]);
-
-  const discardNotes = useCallback(() => {
-    setNotes(savedNotes);
-  }, [savedNotes]);
-
-  const setNote = useCallback((apiName, text) => {
-    setNotes(prev => ({ ...prev, [apiName]: text }));
-  }, []);
 
   const scored = useMemo(() => {
     if (!base) return [];
@@ -83,6 +74,57 @@ export function OrgProvider({ children }) {
 
   const setOrg = useCallback(next => setOrgState(next), []);
   const setObjectKey = useCallback(next => setObjectKeyState(next), []);
+
+  const notesDirty = useMemo(() => JSON.stringify(savedNotes) !== JSON.stringify(notes), [savedNotes, notes]);
+
+  const setNote = useCallback((apiName, text) => {
+    setNotes(prev => ({ ...prev, [apiName]: text }));
+  }, []);
+
+  const saveNotes = useCallback(async () => {
+    setNotesSaving(true);
+    setNotesError('');
+    try {
+      await saveSharedNotes(objectKey, effectiveOrg, adminEmail, notes);
+      setSavedNotes(notes);
+    } catch (e) {
+      setNotesError(e.message || 'Failed to save notes.');
+    } finally {
+      setNotesSaving(false);
+    }
+  }, [objectKey, effectiveOrg, adminEmail, notes]);
+
+  const resetNotes = useCallback(() => {
+    setNotes(savedNotes);
+    setNotesError('');
+  }, [savedNotes]);
+
+  const loginAdmin = useCallback(async email => {
+    const ok = await checkAdminEmail(email);
+    if (ok) {
+      const normalized = email.trim().toLowerCase();
+      writeLocal(ADMIN_EMAIL_KEY, normalized);
+      setAdminEmail(normalized);
+    }
+    return ok;
+  }, []);
+
+  const logoutAdmin = useCallback(() => {
+    try {
+      localStorage.removeItem(ADMIN_EMAIL_KEY);
+    } catch {
+      /* ignore */
+    }
+    setAdminEmail(null);
+  }, []);
+
+  const setFieldHealthFilters = useCallback(next => {
+    setFieldHealthFiltersState(prev => {
+      const resolved = typeof next === 'function' ? next(prev) : next;
+      writeLocal(FIELD_HEALTH_FILTERS_KEY, resolved);
+      return resolved;
+    });
+  }, []);
 
   const value = {
     org: effectiveOrg,
@@ -97,9 +139,17 @@ export function OrgProvider({ children }) {
     notes,
     setNote,
     notesDirty,
+    notesSaving,
+    notesError,
     saveNotes,
-    resetNotes: discardNotes,
+    resetNotes,
     scored,
+    fieldHealthFilters,
+    setFieldHealthFilters,
+    adminEmail,
+    isAdminAuthenticated: !!adminEmail,
+    loginAdmin,
+    logoutAdmin,
   };
 
   return <OrgContext.Provider value={value}>{children}</OrgContext.Provider>;

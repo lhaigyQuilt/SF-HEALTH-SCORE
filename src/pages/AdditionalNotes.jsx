@@ -4,8 +4,8 @@ import { PageHeader, EmptyState } from '../components/ui';
 import SaveBar from '../components/SaveBar';
 import { dash } from '../lib/format';
 
-export default function AdditionalNotes() {
-  const { org, object, base, scored, notes, setNote, notesDirty, saveNotes, resetNotes } = useOrg();
+export default function AdditionalNotes({ editable = false }) {
+  const { org, object, base, scored, notes, setNote, notesDirty, notesSaving, notesError, saveNotes, resetNotes } = useOrg();
   const [search, setSearch] = useState('');
 
   const additionalNotes = base?.additionalNotes ?? { columns: [], rows: [] };
@@ -35,7 +35,11 @@ export default function AdditionalNotes() {
     <div>
       <PageHeader
         title="Additional Notes"
-        subtitle={`${object.label} — ${org}. Hand-written per-field decisions from this analysis, plus your own notes.`}
+        subtitle={
+          editable
+            ? `${object.label} — ${org}. Hand-written per-field decisions from this analysis, plus shared notes everyone sees.`
+            : `${object.label} — ${org}. Hand-written per-field decisions from this analysis. Read-only — filter or search to find a field.`
+        }
       />
 
       <div className="toolbar">
@@ -65,14 +69,18 @@ export default function AdditionalNotes() {
                       {dash(row[c])}
                     </td>
                   ))}
-                  <td>
-                    <input
-                      className={`field-input${notes[apiName] ? ' is-edited' : ''}`}
-                      placeholder="Add a note…"
-                      value={notes[apiName] ?? ''}
-                      onChange={e => setNote(apiName, e.target.value)}
-                    />
-                  </td>
+                  {editable ? (
+                    <td>
+                      <input
+                        className={`field-input${notes[apiName] ? ' is-edited' : ''}`}
+                        placeholder="Add a note…"
+                        value={notes[apiName] ?? ''}
+                        onChange={e => setNote(apiName, e.target.value)}
+                      />
+                    </td>
+                  ) : (
+                    <td className="cell-muted">{dash(notes[apiName])}</td>
+                  )}
                 </tr>
               );
             })}
@@ -80,7 +88,16 @@ export default function AdditionalNotes() {
         </table>
       )}
 
-      <SaveBar dirty={notesDirty} onSave={saveNotes} onReset={resetNotes} label="Notes have unsaved changes." />
+      {editable && (
+        <SaveBar
+          dirty={notesDirty}
+          saving={notesSaving}
+          error={notesError}
+          onSave={saveNotes}
+          onReset={resetNotes}
+          label="Notes have unsaved changes."
+        />
+      )}
     </div>
   );
 }

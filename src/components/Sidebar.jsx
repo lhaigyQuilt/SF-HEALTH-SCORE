@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import { useOrg } from '../state/OrgContext';
 import { retireCandidates, verifyFormulaUsage, dataQualityFlags } from '../lib/derive';
@@ -8,7 +8,7 @@ const USER_EMAIL = 'lisahaigy@gmail.com';
 
 function NavItem({ to, label, count }) {
   return (
-    <NavLink to={to} className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+    <NavLink to={to} end className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
       <span>{label}</span>
       {count !== undefined && <span className="sidebar-link-count">{count}</span>}
     </NavLink>
@@ -16,7 +16,16 @@ function NavItem({ to, label, count }) {
 }
 
 export default function Sidebar() {
-  const { org, setOrg, objectKey, setObjectKey, object, objects, scored, base } = useOrg();
+  const { org, setOrg, objectKey, setObjectKey, object, objects, scored, base, isAdminAuthenticated, adminEmail, logoutAdmin } = useOrg();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const inAdminSection = location.pathname.startsWith('/admin');
+  const basePath = inAdminSection ? '/admin' : '';
+
+  function signOutAdmin() {
+    logoutAdmin();
+    navigate('/');
+  }
 
   const counts = useMemo(() => {
     if (!scored.length) return {};
@@ -62,26 +71,40 @@ export default function Sidebar() {
         </div>
       </div>
 
+      {inAdminSection && <div className="admin-banner">Admin mode — editing is live for everyone</div>}
+
       <nav className="sidebar-nav">
         <div className="sidebar-section-label">Overview</div>
-        <NavItem to="/" label="Read Me" />
-        <NavItem to="/scoring-model" label="Scoring Model" />
+        <NavItem to={basePath || '/'} label="Read Me" />
+        <NavItem to={`${basePath}/scoring-model`} label="Scoring Model" />
 
         <div className="sidebar-section-label">{object.label} fields</div>
-        <NavItem to="/field-health" label="Field Health" count={counts.fieldHealth} />
-        <NavItem to="/additional-notes" label="Additional Notes" count={counts.additionalNotes} />
-        <NavItem to="/retire-candidates" label="Retire Candidates" count={counts.retire} />
-        <NavItem to="/verify-formula-usage" label="Verify Formula Usage" count={counts.verify} />
-        <NavItem to="/data-quality-flags" label="Data Quality Flags" count={counts.dq} />
-        <NavItem to="/not-assessable" label="Not Assessable" count={counts.na} />
+        <NavItem to={`${basePath}/field-health`} label="Field Health" count={counts.fieldHealth} />
+        <NavItem to={`${basePath}/additional-notes`} label="Additional Notes" count={counts.additionalNotes} />
+        <NavItem to={`${basePath}/retire-candidates`} label="Retire Candidates" count={counts.retire} />
+        <NavItem to={`${basePath}/verify-formula-usage`} label="Verify Formula Usage" count={counts.verify} />
+        <NavItem to={`${basePath}/data-quality-flags`} label="Data Quality Flags" count={counts.dq} />
+        <NavItem to={`${basePath}/not-assessable`} label="Not Assessable" count={counts.na} />
       </nav>
 
       <div className="sidebar-footer">
-        <div className="sidebar-footer-signed-in">Signed in as</div>
-        <div className="sidebar-footer-email">{USER_EMAIL}</div>
-        <button className="sidebar-signout" type="button">
-          Sign out
-        </button>
+        {inAdminSection ? (
+          <>
+            <div className="sidebar-footer-signed-in">Editing as admin</div>
+            <div className="sidebar-footer-email">{adminEmail}</div>
+            <button className="sidebar-signout" type="button" onClick={signOutAdmin}>
+              Exit admin
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="sidebar-footer-signed-in">Signed in as</div>
+            <div className="sidebar-footer-email">{USER_EMAIL}</div>
+            <NavLink className="sidebar-signout" to={isAdminAuthenticated ? '/admin' : '/admin/login'}>
+              Admin
+            </NavLink>
+          </>
+        )}
       </div>
     </aside>
   );

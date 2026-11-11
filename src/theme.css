@@ -221,6 +221,17 @@ a {
   text-decoration: underline;
 }
 
+.admin-banner {
+  margin: 0 16px 10px;
+  padding: 8px 10px;
+  background: var(--plum);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-align: center;
+}
+
 .main {
   flex: 1;
   min-width: 0;
@@ -573,6 +584,12 @@ table.data-table tbody tr:hover {
   margin-top: 18px;
   font-size: 13px;
   color: var(--navy);
+}
+
+.save-bar.save-bar--error {
+  background: #fdeceb;
+  border-color: var(--red);
+  color: var(--red);
 }
 
 /* ---------- Drawer ---------- */

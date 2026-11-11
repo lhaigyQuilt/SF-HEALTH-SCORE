@@ -3,19 +3,40 @@ import { useOrg } from '../state/OrgContext';
 import { PageHeader, StatTile, FilterChip, Pill, ProgressBar, EmptyState } from '../components/ui';
 import FieldDrawer from '../components/FieldDrawer';
 import FilterBuilder from '../components/FilterBuilder';
+import ExportColumnsModal from '../components/ExportColumnsModal';
 import { pct, num0, dash, dateShort } from '../lib/format';
 import { BAND_ORDER, bandCounts } from '../lib/derive';
-import { matchesFilters } from '../lib/columns';
+import { matchesFilters, FIELD_COLUMNS } from '../lib/columns';
+import { toCsv, downloadCsv } from '../lib/exportCsv';
 
 const ORIGINS = ['Custom', 'Standard', 'Managed Package'];
+const EXPORT_COLUMNS_KEY = 'ofh:exportColumns';
+const DATE_COLUMN_KEYS = new Set(['createdDate', 'lastModified']);
+
+function readExportSelection() {
+  try {
+    const raw = localStorage.getItem(EXPORT_COLUMNS_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch {
+    /* ignore */
+  }
+  return new Set(FIELD_COLUMNS.map(c => c.key));
+}
+
+function formatForExport(col, value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (DATE_COLUMN_KEYS.has(col.key)) return dateShort(value);
+  return String(value);
+}
 
 export default function FieldHealth() {
-  const { org, object, scored } = useOrg();
+  const { org, object, scored, fieldHealthFilters: filtersByKey, setFieldHealthFilters: setFiltersByKey } = useOrg();
   const [search, setSearch] = useState('');
-  const [filtersByKey, setFiltersByKey] = useState({});
   const [sortKey, setSortKey] = useState('healthScore');
   const [sortDir, setSortDir] = useState('asc');
   const [selected, setSelected] = useState(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportColumns, setExportColumns] = useState(readExportSelection);
 
   const counts = useMemo(() => bandCounts(scored), [scored]);
   const avgHealth = useMemo(() => {
@@ -72,6 +93,31 @@ export default function FieldHealth() {
     }
   }
 
+  function persistExportColumns(next) {
+    setExportColumns(next);
+    try {
+      localStorage.setItem(EXPORT_COLUMNS_KEY, JSON.stringify([...next]));
+    } catch {
+      /* ignore (private window / quota) */
+    }
+  }
+
+  function toggleExportColumn(key) {
+    const next = new Set(exportColumns);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    persistExportColumns(next);
+  }
+
+  function handleExport() {
+    const columns = FIELD_COLUMNS.filter(c => exportColumns.has(c.key));
+    const header = columns.map(c => c.label);
+    const rows = filtered.map(f => columns.map(c => formatForExport(c, f[c.key])));
+    const filename = `${object.label}_Field_Health_${org}_${new Date().toISOString().slice(0, 10)}.csv`;
+    downloadCsv(filename, toCsv(header, rows));
+    setExportOpen(false);
+  }
+
   return (
     <div>
       <PageHeader title="Field Health" subtitle={`One row per assessed ${object.label} field — ${org}. ${scored.length} fields.`} />
@@ -109,7 +155,14 @@ export default function FieldHealth() {
 
       <div className="toolbar">
         <input className="search-input" placeholder="Search by API name or label…" value={search} onChange={e => setSearch(e.target.value)} />
-        <span className="toolbar-count">{filtered.length} of {scored.length}</span>
+        <div className="toolbar-right">
+          <span className="toolbar-count">
+            {filtered.length} of {scored.length}
+          </span>
+          <button className="btn btn-primary" type="button" onClick={() => setExportOpen(true)}>
+            Export to Excel
+          </button>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -162,6 +215,17 @@ export default function FieldHealth() {
       )}
 
       <FieldDrawer field={selected} onClose={() => setSelected(null)} />
+
+      <ExportColumnsModal
+        open={exportOpen}
+        selected={exportColumns}
+        onToggle={toggleExportColumn}
+        onSelectAll={() => persistExportColumns(new Set(FIELD_COLUMNS.map(c => c.key)))}
+        onSelectNone={() => persistExportColumns(new Set())}
+        onClose={() => setExportOpen(false)}
+        onExport={handleExport}
+        rowCount={filtered.length}
+      />
     </div>
   );
 }
